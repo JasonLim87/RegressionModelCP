@@ -1,0 +1,84 @@
+---
+title: "Car Specification Impact on Miles Per Galleon (MPG) Performance"
+author: "Jason Lim"
+date: "Friday, June 05, 2015"
+output: pdf_document
+---
+
+#Executive Summary
+The relationship between MPG and a set of variables is analyzed utilizing a data set extracted from an Automobile Magazine with emphasis on the relationship between MPG and the type of transmission, Auto or Manual.
+
+The average MPG for an automatic car is approximately **17 MPG** whereas for manual car is approximately **22 MPG**. 
+
+After the data has been analysed using the Linear Regression Model, it is also determined that with **all other variables set to a constant**, manual cars' performance in MPG field is approximately **1.8 MPG** better compared to automatic cars.
+
+#Exploratory Analysis
+
+The dataset is loaded and explored.
+```{r}
+data(mtcars)
+```
+
+The variables **cyl**, **vs**, **gear**, **carb**, and **am** are originally classified as num, but they're actually factors, thus some cleaning up was required. Additionally,  **am**'s 0 and 1 values has been replaced by auto and manual respectively.
+
+```{r}
+mtcars$cyl  <- factor(mtcars$cyl)
+mtcars$vs   <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am   <- factor(mtcars$am,labels=c("Auto","Manual"))
+```
+
+Now exploratory analysis can be done. As the relationship between MGP and Auto/Manual type cars is the focus, a boxplot featuring these 2 is plotted as seen in **Figure 1**.
+
+From **Figure 1**, it is clear that on average a manual car have a performance of approximately **22 MPG** whereas an automatic car has a performance of approximately **17 MPG**.
+
+Deeper analysis is done using the Linear Regression Method.
+
+#Analysis
+Firstly, all variables are taken into account when predicting MPG before the variables that are most impactful is narrowed down.
+
+```{r}
+allModel<-lm(mpg ~ .,data=mtcars)
+summary(allModel)$adj.r.squared
+```
+It is not practical to have so many predictors in a Model, and the R-Squared value is just **0.78**, meaning the model covers only 78% of variability. Thus it is recommended that a different model be used.
+
+The Step function will be used to further improve the above model :
+```{r,include=F}
+stepModel<-step(allModel,direction="both")
+```
+
+```{r}
+stepModel$coef
+summary(stepModel)$adj.r.squared
+```
+
+From the above, most of the predictors have been eliminated, leaving just **cyl**, **wt**, **am** as main predictors, the adjusted R-Squared value has also been improved to **0.84**. 
+
+#ANOVA Test
+An **ANOVA** test comparing **stepModel**, and the base model consisting only **am** as predictor is performed.
+
+```{r}
+baseModel<-lm(mpg ~ am,data=mtcars)
+anova(baseModel,stepModel)[6]
+```
+As can be seen from the P value of the test, the **null hypothesis** that states cyl, hp, wt does not contribute is rejected.
+
+#Residuals vs Fitted
+**Figure 2** shows the **Residuals vs Fitted** plot, and it shows that **Toyota Corolla**, **Datsun 710**, and **Fiat 128** are the main residuals that has caused the curve to occur.
+
+#Conclusion
+Manual cars have **higher MPG** compared to Automatic cars by 1.8 MPG. Car Weight's affect on car weight is the highest, with MPG decreasing at an approximate rate of **2.5MPG per 1000lb increase in weight**.
+
+#Appendix
+Figure 1 - Boxplot of MGP and A/M
+```{r}
+boxplot(mpg ~ am, data = mtcars, ylab = "Miles Per Gallon", xlab = "Transmission Type")
+```
+
+Figure 2 - Residual vs Fitted
+```{r}
+plot(stepModel,which=c(1,1))
+```
+
